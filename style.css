@@ -1,0 +1,797 @@
+// Music Recommendation System - JavaScript Implementation (Fixed Search)
+
+class MusicRecommendationSystem {
+    constructor() {
+        this.currentUser = 'user1';
+        this.currentAlgorithm = 'collaborative';
+        this.searchActive = false;
+        this.userRatings = {};
+        this.userPreferences = {
+            genres: ['pop', 'electronic'],
+            mood: 'energetic'
+        };
+        
+        this.data = {
+            users: [
+                {"id": "user1", "name": "Alex", "favoriteGenres": ["pop", "electronic"], "mood": "energetic"},
+                {"id": "user2", "name": "Sam", "favoriteGenres": ["rock", "alternative"], "mood": "relaxed"},
+                {"id": "user3", "name": "Jordan", "favoriteGenres": ["jazz", "classical"], "mood": "calm"}
+            ],
+            songs: [
+                {"id": "1", "title": "Blinding Lights", "artist": "The Weeknd", "genre": "pop", "mood": "energetic", "duration": "3:20", "year": 2020, "popularity": 95},
+                {"id": "2", "title": "Bohemian Rhapsody", "artist": "Queen", "genre": "rock", "mood": "epic", "duration": "5:55", "year": 1975, "popularity": 90},
+                {"id": "3", "title": "Take Five", "artist": "Dave Brubeck", "genre": "jazz", "mood": "relaxed", "duration": "5:24", "year": 1959, "popularity": 80},
+                {"id": "4", "title": "One More Time", "artist": "Daft Punk", "genre": "electronic", "mood": "energetic", "duration": "5:20", "year": 2000, "popularity": 88},
+                {"id": "5", "title": "Hotel California", "artist": "Eagles", "genre": "rock", "mood": "nostalgic", "duration": "6:30", "year": 1976, "popularity": 92},
+                {"id": "6", "title": "Clair de Lune", "artist": "Claude Debussy", "genre": "classical", "mood": "calm", "duration": "4:50", "year": 1905, "popularity": 85},
+                {"id": "7", "title": "Good 4 U", "artist": "Olivia Rodrigo", "genre": "pop", "mood": "energetic", "duration": "2:58", "year": 2021, "popularity": 94},
+                {"id": "8", "title": "Smells Like Teen Spirit", "artist": "Nirvana", "genre": "grunge", "mood": "aggressive", "duration": "5:01", "year": 1991, "popularity": 89},
+                {"id": "9", "title": "Blue in Green", "artist": "Miles Davis", "genre": "jazz", "mood": "melancholic", "duration": "5:37", "year": 1959, "popularity": 82},
+                {"id": "10", "title": "Strobe", "artist": "Deadmau5", "genre": "electronic", "mood": "euphoric", "duration": "10:36", "year": 2009, "popularity": 86},
+                {"id": "11", "title": "Imagine", "artist": "John Lennon", "genre": "pop", "mood": "peaceful", "duration": "3:03", "year": 1971, "popularity": 91},
+                {"id": "12", "title": "Thunderstruck", "artist": "AC/DC", "genre": "rock", "mood": "energetic", "duration": "4:52", "year": 1990, "popularity": 87},
+                {"id": "13", "title": "The Girl from Ipanema", "artist": "Stan Getz", "genre": "bossa nova", "mood": "romantic", "duration": "5:06", "year": 1964, "popularity": 83},
+                {"id": "14", "title": "Midnight City", "artist": "M83", "genre": "indie", "mood": "dreamy", "duration": "4:03", "year": 2011, "popularity": 85},
+                {"id": "15", "title": "Billie Jean", "artist": "Michael Jackson", "genre": "pop", "mood": "groovy", "duration": "4:54", "year": 1982, "popularity": 96},
+                {"id": "16", "title": "Stairway to Heaven", "artist": "Led Zeppelin", "genre": "rock", "mood": "epic", "duration": "8:02", "year": 1971, "popularity": 93},
+                {"id": "17", "title": "So What", "artist": "Miles Davis", "genre": "jazz", "mood": "cool", "duration": "9:22", "year": 1959, "popularity": 84},
+                {"id": "18", "title": "Around the World", "artist": "Daft Punk", "genre": "electronic", "mood": "hypnotic", "duration": "7:09", "year": 1997, "popularity": 87},
+                {"id": "19", "title": "Shape of You", "artist": "Ed Sheeran", "genre": "pop", "mood": "catchy", "duration": "3:53", "year": 2017, "popularity": 95},
+                {"id": "20", "title": "Comfortably Numb", "artist": "Pink Floyd", "genre": "progressive rock", "mood": "contemplative", "duration": "6:23", "year": 1979, "popularity": 90}
+            ],
+            userRatings: {
+                "user1": {"1": 5, "4": 4, "7": 5, "15": 4, "19": 3},
+                "user2": {"2": 5, "5": 4, "8": 5, "12": 4, "16": 5},
+                "user3": {"3": 5, "6": 4, "9": 5, "13": 4, "17": 5}
+            },
+            algorithmInfo: {
+                "collaborative": {
+                    "name": "Collaborative Filtering",
+                    "description": "Recommends music based on similar users' preferences and listening patterns",
+                    "icon": "👥",
+                    "accuracy": 85,
+                    "diversity": 70
+                },
+                "content": {
+                    "name": "Content-Based Filtering", 
+                    "description": "Recommends music based on song characteristics and your listening history",
+                    "icon": "🎵",
+                    "accuracy": 78,
+                    "diversity": 85
+                },
+                "hybrid": {
+                    "name": "Hybrid Recommendations",
+                    "description": "Combines multiple algorithms for more accurate and diverse recommendations",
+                    "icon": "🔄",
+                    "accuracy": 92,
+                    "diversity": 88
+                },
+                "popular": {
+                    "name": "Popular & Trending",
+                    "description": "Shows currently popular and trending songs across all users",
+                    "icon": "🔥",
+                    "accuracy": 75,
+                    "diversity": 60
+                }
+            }
+        };
+        
+        this.userRatings = { ...this.data.userRatings };
+        this.originalRecommendations = []; // Store original recommendations
+        this.initializeEventListeners();
+        this.updateUserProfile();
+        this.updateRecommendations();
+        this.updateRecentSongs();
+    }
+
+    initializeEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                this.switchAlgorithm(e.target.closest('.tab-button').dataset.tab);
+            });
+        });
+
+        // Search functionality - Fixed
+        const searchBtn = document.getElementById('search-btn');
+        const searchSection = document.getElementById('search-section');
+        const searchInput = document.getElementById('search-input');
+        const searchExecute = document.getElementById('search-execute');
+
+        searchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.searchActive = !this.searchActive;
+            
+            if (this.searchActive) {
+                searchSection.style.display = 'block';
+                searchSection.classList.add('active');
+                searchInput.focus();
+                searchBtn.textContent = '✕ Close Search';
+            } else {
+                searchSection.style.display = 'none';
+                searchSection.classList.remove('active');
+                searchBtn.textContent = '🔍 Search';
+                searchInput.value = '';
+                this.updateRecommendations(); // Return to normal recommendations
+            }
+        });
+
+        searchExecute.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.performSearch();
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.performSearch();
+            }
+        });
+
+        // Clear search when input is empty
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value === '') {
+                this.updateRecommendations();
+            }
+        });
+
+        // Filters
+        document.getElementById('filter-genre').addEventListener('change', () => {
+            if (this.searchActive && searchInput.value) {
+                this.performSearch();
+            } else {
+                this.updateRecommendations();
+            }
+        });
+
+        document.getElementById('sort-by').addEventListener('change', () => {
+            if (this.searchActive && searchInput.value) {
+                this.performSearch();
+            } else {
+                this.updateRecommendations();
+            }
+        });
+
+        // Genre preferences
+        document.querySelectorAll('.genre-tag input').forEach(input => {
+            input.addEventListener('change', () => {
+                this.updateUserPreferences();
+            });
+        });
+
+        // Mood selector
+        document.getElementById('mood-selector').addEventListener('change', (e) => {
+            this.userPreferences.mood = e.target.value;
+            this.updateRecommendations();
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('song-modal');
+        const modalClose = document.querySelector('.modal-close');
+        
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Prevent modal from closing when clicking modal content
+        document.querySelector('.modal-content').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    updateUserProfile() {
+        const currentUser = this.data.users.find(u => u.id === this.currentUser);
+        document.getElementById('current-user-name').textContent = currentUser.name;
+        
+        // Update genre preferences
+        document.querySelectorAll('.genre-tag input').forEach(input => {
+            input.checked = currentUser.favoriteGenres.includes(input.value);
+        });
+
+        // Update mood selector
+        document.getElementById('mood-selector').value = currentUser.mood;
+        this.userPreferences.mood = currentUser.mood;
+    }
+
+    updateUserPreferences() {
+        const selectedGenres = Array.from(document.querySelectorAll('.genre-tag input:checked'))
+            .map(input => input.value);
+        this.userPreferences.genres = selectedGenres;
+        this.updateRecommendations();
+    }
+
+    switchAlgorithm(algorithm) {
+        this.currentAlgorithm = algorithm;
+        
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${algorithm}"]`).classList.add('active');
+        
+        // Update algorithm info
+        const algorithmData = this.data.algorithmInfo[algorithm];
+        document.getElementById('algorithm-title').textContent = algorithmData.name;
+        document.getElementById('algorithm-desc').textContent = algorithmData.description;
+        
+        // Update progress bars
+        document.getElementById('accuracy-progress').style.width = `${algorithmData.accuracy}%`;
+        document.getElementById('diversity-progress').style.width = `${algorithmData.diversity}%`;
+        
+        // Update footer accuracy
+        document.getElementById('footer-accuracy').textContent = `${algorithmData.accuracy}%`;
+        
+        // If search is active, perform search again with new algorithm
+        const searchInput = document.getElementById('search-input');
+        if (this.searchActive && searchInput.value) {
+            this.performSearch();
+        } else {
+            this.updateRecommendations();
+        }
+    }
+
+    collaborativeFiltering() {
+        const currentUserRatings = this.userRatings[this.currentUser] || {};
+        const recommendations = [];
+        
+        // Find similar users
+        const similarities = {};
+        Object.keys(this.userRatings).forEach(userId => {
+            if (userId !== this.currentUser) {
+                similarities[userId] = this.calculateUserSimilarity(currentUserRatings, this.userRatings[userId]);
+            }
+        });
+        
+        // Get songs rated by similar users
+        const similarUsers = Object.entries(similarities)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 2);
+        
+        const songScores = {};
+        similarUsers.forEach(([userId, similarity]) => {
+            Object.entries(this.userRatings[userId]).forEach(([songId, rating]) => {
+                if (!currentUserRatings[songId]) {
+                    songScores[songId] = (songScores[songId] || 0) + (rating * similarity);
+                }
+            });
+        });
+        
+        // Convert to recommendations
+        Object.entries(songScores)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .forEach(([songId, score]) => {
+                const song = this.data.songs.find(s => s.id === songId);
+                if (song) {
+                    const similarUser = this.data.users.find(u => u.id === similarUsers[0][0]);
+                    recommendations.push({
+                        ...song,
+                        score: Math.min(score * 20, 100),
+                        reason: `Users with similar taste also loved this. ${similarUser ? similarUser.name : 'Similar users'} rated it highly.`
+                    });
+                }
+            });
+        
+        // If no collaborative recommendations, fall back to content-based
+        if (recommendations.length === 0) {
+            return this.contentBasedFiltering().slice(0, 6);
+        }
+        
+        return recommendations;
+    }
+
+    contentBasedFiltering() {
+        const recommendations = [];
+        const currentUserRatings = this.userRatings[this.currentUser] || {};
+        
+        // Get user's liked songs
+        const likedSongs = Object.entries(currentUserRatings)
+            .filter(([songId, rating]) => rating >= 4)
+            .map(([songId]) => this.data.songs.find(s => s.id === songId))
+            .filter(song => song);
+        
+        // Score songs based on content similarity
+        this.data.songs.forEach(song => {
+            if (!currentUserRatings[song.id]) {
+                let score = 0;
+                let reasons = [];
+                
+                // Genre matching
+                if (this.userPreferences.genres.includes(song.genre)) {
+                    score += 35;
+                    reasons.push(`matches your preferred genre: ${song.genre}`);
+                }
+                
+                // Mood matching
+                if (song.mood === this.userPreferences.mood || 
+                    (this.userPreferences.mood === 'energetic' && ['groovy', 'catchy', 'epic'].includes(song.mood))) {
+                    score += 30;
+                    reasons.push(`fits your current mood: ${song.mood}`);
+                }
+                
+                // Similarity to liked songs
+                likedSongs.forEach(likedSong => {
+                    if (likedSong.genre === song.genre) {
+                        score += 20;
+                        reasons.push(`similar to "${likedSong.title}" which you liked`);
+                    }
+                    if (likedSong.artist === song.artist) {
+                        score += 25;
+                        reasons.push(`by ${song.artist}, whom you've enjoyed before`);
+                    }
+                });
+                
+                // Popularity boost
+                score += (song.popularity / 100) * 15;
+                
+                if (score > 25) {
+                    recommendations.push({
+                        ...song,
+                        score: Math.min(score, 100),
+                        reason: `Perfect match! It ${reasons.slice(0, 2).join(' and ')}.`
+                    });
+                }
+            }
+        });
+        
+        return recommendations.sort((a, b) => b.score - a.score).slice(0, 10);
+    }
+
+    hybridRecommendations() {
+        const collaborative = this.collaborativeFiltering();
+        const contentBased = this.contentBasedFiltering();
+        
+        // Combine recommendations with weighted scores
+        const combined = {};
+        
+        collaborative.forEach(rec => {
+            combined[rec.id] = {
+                ...rec,
+                score: rec.score * 0.6,
+                reason: `Hybrid recommendation: ${rec.reason}`
+            };
+        });
+        
+        contentBased.forEach(rec => {
+            if (combined[rec.id]) {
+                combined[rec.id].score += rec.score * 0.4;
+                combined[rec.id].reason = `Perfect hybrid match! Users love it and it fits your taste perfectly.`;
+            } else {
+                combined[rec.id] = {
+                    ...rec,
+                    score: rec.score * 0.4,
+                    reason: `Hybrid recommendation: ${rec.reason}`
+                };
+            }
+        });
+        
+        return Object.values(combined)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10);
+    }
+
+    popularRecommendations() {
+        return this.data.songs
+            .filter(song => {
+                const currentUserRatings = this.userRatings[this.currentUser] || {};
+                return !currentUserRatings[song.id];
+            })
+            .sort((a, b) => b.popularity - a.popularity)
+            .slice(0, 10)
+            .map(song => ({
+                ...song,
+                score: song.popularity,
+                reason: `Trending now! ${song.popularity}% of users love this song. Currently the hottest track!`
+            }));
+    }
+
+    calculateUserSimilarity(ratings1, ratings2) {
+        const commonSongs = Object.keys(ratings1).filter(song => ratings2[song]);
+        if (commonSongs.length === 0) return 0;
+        
+        let sum1 = 0, sum2 = 0, sum1Sq = 0, sum2Sq = 0, pSum = 0;
+        
+        commonSongs.forEach(song => {
+            const rating1 = ratings1[song];
+            const rating2 = ratings2[song];
+            
+            sum1 += rating1;
+            sum2 += rating2;
+            sum1Sq += rating1 * rating1;
+            sum2Sq += rating2 * rating2;
+            pSum += rating1 * rating2;
+        });
+        
+        const num = pSum - (sum1 * sum2 / commonSongs.length);
+        const den = Math.sqrt((sum1Sq - sum1 * sum1 / commonSongs.length) * 
+                            (sum2Sq - sum2 * sum2 / commonSongs.length));
+        
+        return den === 0 ? 0 : num / den;
+    }
+
+    updateRecommendations() {
+        let recommendations = [];
+        
+        switch (this.currentAlgorithm) {
+            case 'collaborative':
+                recommendations = this.collaborativeFiltering();
+                break;
+            case 'content':
+                recommendations = this.contentBasedFiltering();
+                break;
+            case 'hybrid':
+                recommendations = this.hybridRecommendations();
+                break;
+            case 'popular':
+                recommendations = this.popularRecommendations();
+                break;
+        }
+        
+        this.originalRecommendations = [...recommendations];
+        this.applyFiltersAndDisplay(recommendations);
+    }
+
+    applyFiltersAndDisplay(recommendations) {
+        // Apply filters
+        const filterGenre = document.getElementById('filter-genre').value;
+        const sortBy = document.getElementById('sort-by').value;
+        
+        let filteredRecommendations = [...recommendations];
+        
+        if (filterGenre) {
+            filteredRecommendations = filteredRecommendations.filter(song => song.genre === filterGenre);
+        }
+        
+        // Apply sorting
+        switch (sortBy) {
+            case 'popularity':
+                filteredRecommendations.sort((a, b) => b.popularity - a.popularity);
+                break;
+            case 'year':
+                filteredRecommendations.sort((a, b) => b.year - a.year);
+                break;
+            case 'title':
+                filteredRecommendations.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+            // 'relevance' is already sorted by score
+        }
+        
+        this.displayRecommendations(filteredRecommendations);
+    }
+
+    displayRecommendations(recommendations) {
+        const grid = document.getElementById('recommendations-grid');
+        const countElement = document.getElementById('recommendation-count');
+        
+        countElement.textContent = `${recommendations.length} songs`;
+        
+        if (recommendations.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--music-text-secondary);">
+                    <h3>No recommendations found</h3>
+                    <p>Try adjusting your filters or search terms</p>
+                </div>
+            `;
+            return;
+        }
+        
+        grid.innerHTML = recommendations.map(song => `
+            <div class="song-card" data-song-id="${song.id}">
+                <div class="song-card-header">
+                    <div class="song-artwork">🎵</div>
+                    <div class="song-info">
+                        <h3 class="song-title">${song.title}</h3>
+                        <p class="song-artist">${song.artist}</p>
+                    </div>
+                    <span class="song-duration">${song.duration}</span>
+                </div>
+                
+                <div class="song-tags">
+                    <span class="tag genre">${song.genre}</span>
+                    <span class="tag mood">${song.mood}</span>
+                    <span class="tag">${song.year}</span>
+                </div>
+                
+                <div class="song-recommendation">
+                    <div class="recommendation-reason">${song.reason}</div>
+                    <div class="similarity-score">
+                        <span>Match</span>
+                        <div class="score-bar">
+                            <div class="score-progress" style="width: ${song.score}%"></div>
+                        </div>
+                        <span>${Math.round(song.score)}%</span>
+                    </div>
+                </div>
+                
+                <div class="song-actions">
+                    <button class="action-btn play-btn" data-action="play">▶️</button>
+                    <button class="action-btn like-btn ${this.isLiked(song.id) ? 'liked' : ''}" data-action="like">❤️</button>
+                    <button class="action-btn dislike-btn ${this.isDisliked(song.id) ? 'disliked' : ''}" data-action="dislike">👎</button>
+                    <button class="action-btn playlist-btn" data-action="playlist">📁</button>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add event listeners to song cards and action buttons
+        grid.querySelectorAll('.song-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('action-btn')) {
+                    this.showSongModal(e.currentTarget.dataset.songId);
+                }
+            });
+        });
+        
+        grid.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const songId = btn.closest('.song-card').dataset.songId;
+                const action = btn.dataset.action;
+                this.handleSongAction(songId, action, btn);
+            });
+        });
+    }
+
+    handleSongAction(songId, action, button) {
+        switch (action) {
+            case 'play':
+                this.playSong(songId);
+                break;
+            case 'like':
+                this.rateSong(songId, 5);
+                button.classList.add('liked');
+                button.parentElement.querySelector('.dislike-btn').classList.remove('disliked');
+                this.showNotification('Added to your favorites! 💖');
+                break;
+            case 'dislike':
+                this.rateSong(songId, 1);
+                button.classList.add('disliked');
+                button.parentElement.querySelector('.like-btn').classList.remove('liked');
+                this.showNotification('Thanks for the feedback! 👍');
+                break;
+            case 'playlist':
+                this.addToPlaylist(songId);
+                break;
+        }
+        
+        // Update recommendations after rating
+        if (action === 'like' || action === 'dislike') {
+            setTimeout(() => {
+                this.updateRecommendations();
+                this.updateRecentSongs();
+            }, 500);
+        }
+    }
+
+    isLiked(songId) {
+        const userRatings = this.userRatings[this.currentUser] || {};
+        return userRatings[songId] >= 4;
+    }
+
+    isDisliked(songId) {
+        const userRatings = this.userRatings[this.currentUser] || {};
+        return userRatings[songId] <= 2;
+    }
+
+    playSong(songId) {
+        const song = this.data.songs.find(s => s.id === songId);
+        if (song) {
+            this.showNotification(`🎵 Playing: ${song.title} by ${song.artist}`);
+            this.addToRecentSongs(song);
+        }
+    }
+
+    rateSong(songId, rating) {
+        if (!this.userRatings[this.currentUser]) {
+            this.userRatings[this.currentUser] = {};
+        }
+        this.userRatings[this.currentUser][songId] = rating;
+    }
+
+    addToPlaylist(songId) {
+        const song = this.data.songs.find(s => s.id === songId);
+        if (song) {
+            this.showNotification(`📁 Added "${song.title}" to your playlist!`);
+        }
+    }
+
+    showSongModal(songId) {
+        const song = this.data.songs.find(s => s.id === songId);
+        if (!song) return;
+        
+        const modal = document.getElementById('song-modal');
+        const recommendations = this.originalRecommendations.length > 0 ? this.originalRecommendations : this.getCurrentRecommendations();
+        const recommendation = recommendations.find(r => r.id === songId);
+        
+        document.getElementById('modal-song-title').textContent = song.title;
+        document.getElementById('modal-song-artist').textContent = song.artist;
+        document.getElementById('modal-song-genre').textContent = song.genre;
+        document.getElementById('modal-song-mood').textContent = song.mood;
+        document.getElementById('modal-reason').textContent = recommendation ? recommendation.reason : 'Great choice for your music taste!';
+        document.getElementById('modal-similarity').style.width = `${recommendation ? recommendation.score : 85}%`;
+        
+        modal.classList.add('active');
+    }
+
+    getCurrentRecommendations() {
+        switch (this.currentAlgorithm) {
+            case 'collaborative':
+                return this.collaborativeFiltering();
+            case 'content':
+                return this.contentBasedFiltering();
+            case 'hybrid':
+                return this.hybridRecommendations();
+            case 'popular':
+                return this.popularRecommendations();
+            default:
+                return [];
+        }
+    }
+
+    performSearch() {
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        if (!query) {
+            this.updateRecommendations();
+            return;
+        }
+        
+        const results = this.data.songs.filter(song => 
+            song.title.toLowerCase().includes(query) ||
+            song.artist.toLowerCase().includes(query) ||
+            song.genre.toLowerCase().includes(query) ||
+            song.mood.toLowerCase().includes(query)
+        ).map(song => ({
+            ...song,
+            score: this.calculateSearchScore(song, query),
+            reason: `Search result for "${query}" - ${this.getSearchReason(song, query)}`
+        }));
+        
+        // Sort by search relevance
+        results.sort((a, b) => b.score - a.score);
+        
+        this.applyFiltersAndDisplay(results);
+        
+        const countElement = document.getElementById('recommendation-count');
+        countElement.textContent = `${results.length} search results for "${query}"`;
+    }
+
+    calculateSearchScore(song, query) {
+        let score = 0;
+        const titleMatch = song.title.toLowerCase().includes(query);
+        const artistMatch = song.artist.toLowerCase().includes(query);
+        const genreMatch = song.genre.toLowerCase().includes(query);
+        const moodMatch = song.mood.toLowerCase().includes(query);
+        
+        if (titleMatch) score += 50;
+        if (artistMatch) score += 40;
+        if (genreMatch) score += 30;
+        if (moodMatch) score += 20;
+        
+        // Boost score for exact matches
+        if (song.title.toLowerCase() === query) score += 30;
+        if (song.artist.toLowerCase() === query) score += 25;
+        
+        // Add popularity bonus
+        score += (song.popularity / 100) * 10;
+        
+        return Math.min(score, 100);
+    }
+
+    getSearchReason(song, query) {
+        const reasons = [];
+        if (song.title.toLowerCase().includes(query)) reasons.push('title match');
+        if (song.artist.toLowerCase().includes(query)) reasons.push('artist match');
+        if (song.genre.toLowerCase().includes(query)) reasons.push('genre match');
+        if (song.mood.toLowerCase().includes(query)) reasons.push('mood match');
+        
+        return reasons.join(', ') || 'partial match';
+    }
+
+    updateRecentSongs() {
+        const recentSongsContainer = document.getElementById('recent-songs');
+        const userRatings = this.userRatings[this.currentUser] || {};
+        
+        const recentSongs = Object.entries(userRatings)
+            .filter(([songId, rating]) => rating >= 4)
+            .map(([songId]) => this.data.songs.find(s => s.id === songId))
+            .filter(song => song)
+            .slice(0, 5);
+        
+        if (recentSongs.length === 0) {
+            recentSongsContainer.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--music-text-secondary); font-size: 14px;">
+                    Like some songs to see them here!
+                </div>
+            `;
+            return;
+        }
+        
+        recentSongsContainer.innerHTML = recentSongs.map(song => `
+            <div class="recent-song" data-song-id="${song.id}">
+                <div class="recent-song-artwork">🎵</div>
+                <div class="recent-song-info">
+                    <div class="recent-song-title">${song.title}</div>
+                    <div class="recent-song-artist">${song.artist}</div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add click listeners to recent songs
+        recentSongsContainer.querySelectorAll('.recent-song').forEach(song => {
+            song.addEventListener('click', () => {
+                this.showSongModal(song.dataset.songId);
+            });
+        });
+    }
+
+    addToRecentSongs(song) {
+        this.rateSong(song.id, 4); // Auto-rate played songs
+        this.updateRecentSongs();
+    }
+
+    showNotification(message) {
+        // Create temporary notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--music-primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1001;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    new MusicRecommendationSystem();
+});
+
+// Add slideIn and slideOut animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
