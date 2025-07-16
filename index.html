@@ -1,1 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Recommendation System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">🎵 Music Recommendation System</h1>
+                <div class="user-actions">
+                    <button class="btn btn--secondary btn--sm" id="search-btn">🔍 Search</button>
+                    <div class="user-avatar">
+                        <div class="avatar-circle">A</div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="user-profile">
+                    <div class="profile-header">
+                        <div class="avatar-large">A</div>
+                        <div class="profile-info">
+                            <h3 id="current-user-name">Alex</h3>
+                            <p class="profile-subtitle">Music Enthusiast</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h4>Favorite Genres</h4>
+                        <div class="genre-selector">
+                            <label class="genre-tag">
+                                <input type="checkbox" value="pop" checked>
+                                <span>Pop</span>
+                            </label>
+                            <label class="genre-tag">
+                                <input type="checkbox" value="rock">
+                                <span>Rock</span>
+                            </label>
+                            <label class="genre-tag">
+                                <input type="checkbox" value="electronic" checked>
+                                <span>Electronic</span>
+                            </label>
+                            <label class="genre-tag">
+                                <input type="checkbox" value="jazz">
+                                <span>Jazz</span>
+                            </label>
+                            <label class="genre-tag">
+                                <input type="checkbox" value="classical">
+                                <span>Classical</span>
+                            </label>
+                            <label class="genre-tag">
+                                <input type="checkbox" value="indie">
+                                <span>Indie</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h4>Current Mood</h4>
+                        <select class="form-control mood-selector" id="mood-selector">
+                            <option value="energetic" selected>Energetic</option>
+                            <option value="relaxed">Relaxed</option>
+                            <option value="happy">Happy</option>
+                            <option value="sad">Sad</option>
+                            <option value="calm">Calm</option>
+                            <option value="aggressive">Aggressive</option>
+                        </select>
+                    </div>
+
+                    <div class="profile-section">
+                        <h4>Recently Played</h4>
+                        <div class="recent-songs" id="recent-songs">
+                            <!-- Recent songs will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Search Bar -->
+                <div class="search-section" id="search-section">
+                    <div class="search-bar">
+                        <input type="text" class="form-control" placeholder="Search for songs, artists, or albums..." id="search-input">
+                        <button class="btn btn--primary" id="search-execute">Search</button>
+                    </div>
+                    <div class="filters">
+                        <select class="form-control" id="filter-genre">
+                            <option value="">All Genres</option>
+                            <option value="pop">Pop</option>
+                            <option value="rock">Rock</option>
+                            <option value="electronic">Electronic</option>
+                            <option value="jazz">Jazz</option>
+                            <option value="classical">Classical</option>
+                        </select>
+                        <select class="form-control" id="sort-by">
+                            <option value="relevance">Sort by Relevance</option>
+                            <option value="popularity">Sort by Popularity</option>
+                            <option value="year">Sort by Year</option>
+                            <option value="title">Sort by Title</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Algorithm Tabs -->
+                <div class="algorithm-tabs">
+                    <button class="tab-button active" data-tab="collaborative">
+                        <span class="tab-icon">👥</span>
+                        Collaborative Filtering
+                    </button>
+                    <button class="tab-button" data-tab="content">
+                        <span class="tab-icon">🎵</span>
+                        Content-Based
+                    </button>
+                    <button class="tab-button" data-tab="hybrid">
+                        <span class="tab-icon">🔄</span>
+                        Hybrid
+                    </button>
+                    <button class="tab-button" data-tab="popular">
+                        <span class="tab-icon">🔥</span>
+                        Popular & Trending
+                    </button>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="algorithm-info" id="algorithm-info">
+                    <div class="algorithm-description">
+                        <h3 id="algorithm-title">Collaborative Filtering</h3>
+                        <p id="algorithm-desc">Recommends music based on similar users' preferences and listening patterns</p>
+                    </div>
+                    <div class="algorithm-stats">
+                        <div class="stat">
+                            <span class="stat-label">Accuracy</span>
+                            <div class="stat-bar">
+                                <div class="stat-progress" id="accuracy-progress" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Diversity</span>
+                            <div class="stat-bar">
+                                <div class="stat-progress" id="diversity-progress" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="recommendations-section">
+                    <div class="section-header">
+                        <h2>Recommendations for You</h2>
+                        <span class="recommendation-count" id="recommendation-count">0 songs</span>
+                    </div>
+                    <div class="songs-grid" id="recommendations-grid">
+                        <!-- Song cards will be populated by JavaScript -->
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Music Recommendation System</h4>
+                    <p>Powered by advanced algorithms and machine learning</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Algorithm Performance</h4>
+                    <div class="performance-metrics">
+                        <span class="metric">Accuracy: <strong id="footer-accuracy">85%</strong></span>
+                        <span class="metric">Processed: <strong id="footer-processed">1,247</strong> songs</span>
+                        <span class="metric">Users: <strong>847</strong></span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Song Detail Modal -->
+    <div class="modal" id="song-modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-header">
+                <div class="song-artwork">🎵</div>
+                <div class="song-details">
+                    <h3 id="modal-song-title"></h3>
+                    <p id="modal-song-artist"></p>
+                    <div class="song-tags">
+                        <span class="tag" id="modal-song-genre"></span>
+                        <span class="tag" id="modal-song-mood"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="recommendation-reason" id="modal-reason"></div>
+                <div class="similarity-score">
+                    <span>Similarity Score</span>
+                    <div class="score-bar">
+                        <div class="score-progress" id="modal-similarity"></div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn--primary">Add to Playlist</button>
+                    <button class="btn btn--secondary">Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
